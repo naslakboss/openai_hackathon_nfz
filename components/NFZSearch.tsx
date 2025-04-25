@@ -502,6 +502,9 @@ export default function NFZSearch({
                     <div className="text-sm text-gray-500">
                       {facility.attributes.phone}
                     </div>
+                    <div className="text-sm text-blue-600 font-medium mt-1">
+                      Termin: {formatDate(facility.attributes.dates.date)}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
