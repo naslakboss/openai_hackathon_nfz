@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -9,12 +9,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash, Check, AlertCircle } from "lucide-react";
 import { toolTemplates } from "@/lib/tool-templates";
-import { ToolConfigurationDialog } from "./tool-configuration-dialog";
-import { BackendTag } from "./backend-tag";
 import { useBackendTools } from "@/lib/use-backend-tools";
+import { AlertCircle, Check, Edit, Plus, Trash } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { BackendTag } from "./backend-tag";
+import { ToolConfigurationDialog } from "./tool-configuration-dialog";
 
 interface SessionConfigurationPanelProps {
   callStatus: string;
@@ -26,7 +26,7 @@ const SessionConfigurationPanel: React.FC<SessionConfigurationPanelProps> = ({
   onSave,
 }) => {
   const [instructions, setInstructions] = useState(
-    "You are a helpful assistant in a phone call."
+    `Jesteś asystentem głosowym pomagającym dzwoniącym umówić wizytę NFZ. Twoim zadaniem jest zebranie dwóch informacji od dzwoniącego: 1. Specjalisty do którego jest wystawione skierowanie 2. Miejscowości w której dzwoniący chce umówić wizytę. Nie pytaj o inne rzeczy. Nie pytaj o dane osobowe. Nie pytaj o numer PESEL. Nie pytaj o datę wizyty. Nie pytaj o numer telefonu. Nie pytaj o adres e-mail. Nie pytaj o adres zamieszkania. Nie pytaj o imię i nazwisko dzwoniącego. Nie pytaj o wiek dzwoniącego. Następnie, przeka dzwoniącemu, ze szczegóły wizyty zostaną przesłane SMSem.`
   );
   const [voice, setVoice] = useState("ash");
   const [tools, setTools] = useState<string[]>([]);
