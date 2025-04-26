@@ -18,7 +18,8 @@ dependencies = [
     "pipecat-ai[cartesia,openai,silero,websocket,deepgram,elevenlabs, groq, websocket, langchain]==0.0.65",
     "langchain-mcp-adapters>=0.0.3",
     "mcp>=1.6.0",
-    "loguru"
+    "loguru",
+    "openai-agents"
 ]
 
 [dependency-groups]
