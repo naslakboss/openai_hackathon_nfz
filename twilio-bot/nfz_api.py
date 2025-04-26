@@ -5,7 +5,7 @@ import logging
 from bot_types import benefit_names, province_codes
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.CRITICAL, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 CaseType = Literal[1, 2]  # 1: Stable, 2: Urgent
