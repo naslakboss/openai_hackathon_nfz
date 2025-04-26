@@ -6,6 +6,7 @@
 
 import datetime
 import io
+import json
 import os
 import sys
 import wave
@@ -14,7 +15,6 @@ from pipecat.transcriptions.language import Language
 import aiofiles
 from dotenv import load_dotenv
 from fastapi import WebSocket
-from loguru import logger
 from pipecat.services.elevenlabs import ElevenLabsTTSService
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.pipeline.pipeline import Pipeline
@@ -31,13 +31,11 @@ from pipecat.processors.aggregators.llm_response import (
     LLMUserResponseAggregator,
 )
 from pipecat.frames.frames import LLMMessagesFrame
+from pipecatcloud import WebSocketSessionArguments
 from OpenAiAgentProcessor import OpenAiAgentProcessor
+from loguru import logger
 
 load_dotenv(override=True)
-
-logger.remove(0)
-logger.add(sys.stderr, level="DEBUG")
-
 
 async def save_audio(server_name: str, audio: bytes, sample_rate: int, num_channels: int):
     if len(audio) > 0:
@@ -149,3 +147,29 @@ def get_stt():
         prompt="Transcribe the following conversation",
         temperature=0.0,
     )
+
+
+async def bot(args: WebSocketSessionArguments):
+    """Main bot entry point for WebSocket connections.
+
+    Args:
+        ws: The WebSocket connection
+        session_id: The session ID for logging
+    """
+    logger.info("WebSocket bot process initialized")
+    ws = args.websocket
+    
+    start_data = ws.iter_text()
+    await start_data.__anext__()
+
+    # Second message contains the call details
+    call_data = json.loads(await start_data.__anext__())
+
+    # Extract both StreamSid and CallSid
+    stream_sid = call_data["start"]["streamSid"]
+    try:
+        await run_bot(ws, stream_sid, True)
+        logger.info("WebSocket bot process completed")
+    except Exception as e:
+        logger.exception(f"Error in WebSocket bot process: {str(e)}")
+        raise
