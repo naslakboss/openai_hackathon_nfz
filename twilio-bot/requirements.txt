@@ -12,3 +12,7 @@ mcp>=1.6.0
 loguru
 openai-agents
 pipecatcloud==0.1.5
+aiohttp==3.9.1
+python-dotenv==1.0.0
+# You'll need to install the agents framework as provided by your environment
+# or replace it with the correct package name if needed
