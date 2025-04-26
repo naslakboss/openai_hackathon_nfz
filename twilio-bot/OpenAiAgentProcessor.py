@@ -8,7 +8,7 @@ from pipecat.frames.frames import (
 
 from openai.types.responses import ResponseTextDeltaEvent
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
-
+# todo add memory, and tools
 
 class OpenAiAgentProcessor(FrameProcessor):
     def __init__(self, participant_id: str):
