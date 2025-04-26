@@ -273,39 +273,13 @@ async def find_available_visits(province: province_codes, benefit: benefit_names
         List of available visits sorted by earliest date
     """
     logger.info(f"Finding visits for province: '{province}', service: '{benefit}', for_children: {for_children}")
-    
-    # Convert province name to code if needed
-    province_code = province
-    if len(province) != 2:  # Not a province code
-        # Try to find in common names mapping first
-        province_code_from_map = PROVINCE_NAMES_TO_CODES.get(province.lower())
-        if province_code_from_map:
-            province_code = province_code_from_map
-            logger.info(f"Mapped province '{province}' to code '{province_code}'")
-        else:
-            # Try to find matching province code from the official names
-            found = False
-            for code, name in PROVINCES.items():
-                if name.lower() == province.lower():
-                    province_code = code
-                    found = True
-                    logger.info(f"Matched province '{province}' to code '{province_code}'")
-                    break
-            
-            if not found:
-                logger.warning(f"Could not map province '{province}' to a valid code, using as-is")
-    
-    logger.info(f"Using province code: {province_code}")
-    
-    # If medical service is in the common names mapping, use the mapped code
-    
-    # Create API client
+
     client = NFZApiClient()
     
     # Prepare search parameters
     search_params = {
         "case": 1,  # Stable case
-        "province": province_code,
+        "province": province,
         "benefit": benefit,
         "benefitForChildren": for_children,
         "limit": limit,

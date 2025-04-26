@@ -137,7 +137,7 @@ def get_tts():
         api_key=os.getenv("ELEVENLABS_API_KEY"),
         voice_id="Xb7hH8MSUJpSbSDYk0k2",
         sample_rate=24000,
-        params=ElevenLabsTTSService.InputParams(language=Language.EN),
+        params=ElevenLabsTTSService.InputParams(language=Language.PL),
     )
 
 
@@ -145,7 +145,7 @@ def get_stt():
     return GroqSTTService(
         model="whisper-large-v3-turbo",
         api_key=os.getenv("GROQ_API_KEY"),
-        language=Language.EN,
+        language=Language.PL,
         prompt="Transcribe the following conversation",
         temperature=0.0,
     )
