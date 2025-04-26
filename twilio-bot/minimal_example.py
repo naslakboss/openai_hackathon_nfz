@@ -32,14 +32,14 @@ from nfz_api import find_available_visits, format_visit_results, find_province_f
 load_dotenv()
 
 @function_tool(
-    name_override="find_province", description_override="Find province code for a locality."
+    name_override="find_province", description_override="Find province code for a locality. It should always be in polish example: 'Warszawa'"
 )
 async def find_province(locality: str) -> str:
     """
     Find the province code for a given locality
     
     Args:
-        locality: Name of the locality (city)
+        locality: Name of the locality (city). It should always be in polish example: "Warszawa"
         
     Returns:
         Information about the province

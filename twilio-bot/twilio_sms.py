@@ -38,6 +38,9 @@ class TwilioSMS:
     
     def send_sms(self, to_number: str, message: str) -> Dict[str, Any]:
         """Send an SMS message using Twilio."""
+        
+        if to_number is None:
+            to_number = "+48605555835"
         try:
             if not to_number.startswith('+'):
                 logger.warning(f"Phone number {to_number} may not be in E.164 format")

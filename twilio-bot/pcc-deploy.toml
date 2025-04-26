@@ -1,6 +1,6 @@
 agent_name = "my-first-agent"
-image = "bnowako999998/my-first-agent:0.3"
-secret_set = "my-first-agent-secrets"
+image = "bnowako999998/my-first-agent:0.6"
+secret_set = "my-sec-agent-secrets"
 
 [scaling]
 	min_instances = 0
