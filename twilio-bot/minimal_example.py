@@ -130,6 +130,14 @@ nfz_agent = Agent(
     
     Once you have both pieces of information, use the visits tool to find available appointments.
     Present the results clearly, focusing on location, date and contact information.
+    
+    # Structured output
+    You will return the information in a structured format.
+    Information about first 3 available visits structured as
+
+    Nazwa Poradni: Poradnia Laryngologiczna
+    Miasto: Poznań
+    Numer: 510123456
     """,
     tools=[find_province, visits],
 )
