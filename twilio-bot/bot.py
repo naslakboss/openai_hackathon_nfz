@@ -28,6 +28,13 @@ from pipecat.transports.network.fastapi_websocket import (
     FastAPIWebsocketParams,
     FastAPIWebsocketTransport,
 )
+from pipecat.processors.aggregators.llm_response import (
+    LLMAssistantResponseAggregator,
+    LLMUserResponseAggregator,
+)
+from pipecat.frames.frames import BotInterruptionFrame, EndFrame, LLMMessagesFrame
+from CustomBroAgent import CustomBroAgent
+from AgentProcessor import AgentProcessor
 
 load_dotenv(override=True)
 
@@ -67,35 +74,28 @@ async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
         ),
     )
 
-    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o")
-
     stt = get_stt()
     tts = get_tts()
+    
+    agent = CustomBroAgent(tools=[])
+    agent_processor = AgentProcessor(agent=agent, participant_id="a")
+    user_agg = LLMUserResponseAggregator()
+    assistant_agg = LLMAssistantResponseAggregator()
 
-    messages = [
-        {
-            "role": "system",
-            "content": "You are an elementary teacher in an audio call. Your output will be converted to audio so don't include special characters in your answers. Respond to what the student said in a short short sentence.",
-        },
-    ]
-
-    context = OpenAILLMContext(messages)
-    context_aggregator = llm.create_context_aggregator(context)
-
-    # NOTE: Watch out! This will save all the conversation in memory. You can
-    # pass `buffer_size` to get periodic callbacks.
     audiobuffer = AudioBufferProcessor(user_continuous_stream=not testing)
 
     pipeline = Pipeline(
         [
-            transport.input(),  # Websocket input from client
-            stt,  # Speech-To-Text
-            context_aggregator.user(),
-            llm,  # LLM
-            tts,  # Text-To-Speech
-            transport.output(),  # Websocket output to client
-            audiobuffer,  # Used to buffer the audio in the pipeline
-            context_aggregator.assistant(),
+            transport.input(),
+            stt,  
+            user_agg,
+
+            agent_processor,
+
+            tts, 
+            transport.output(),
+            audiobuffer,
+            assistant_agg,
         ]
     )
 
@@ -112,9 +112,12 @@ async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
     async def on_client_connected(transport, client):
         # Start recording.
         await audiobuffer.start_recording()
-        # Kick off the conversation.
-        messages.append({"role": "system", "content": "Please introduce yourself to the user."})
-        await task.queue_frames([context_aggregator.user().get_context_frame()])
+        msg = {
+            "role": "system",
+            "content": "Please introduce yourself to the user in one shortsentance.",
+        }
+        frame = LLMMessagesFrame([msg])
+        await task.queue_frames([frame])
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client):
