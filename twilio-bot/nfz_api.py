@@ -3,6 +3,7 @@ import aiohttp
 from urllib.parse import quote
 import logging
 from bot_types import benefit_names, province_codes
+import asyncio
 
 # Set up logging - only show WARNING and above to reduce verbosity
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -289,6 +290,9 @@ async def find_available_visits(province: province_codes, benefit: benefit_names
     
     logger.info(f"Final search parameters: {search_params}")
     
+    # Add a delay before making the request to respect rate limit
+    await asyncio.sleep(0.2)  # 200ms delay
+    
     # Search for available queues
     response = await client.get_queues(search_params)
     
@@ -412,6 +416,9 @@ async def find_province_for_locality(locality: str) -> dict:
                     if len(localities) > 0:
                         matching_provinces.append((prov_code, prov_name))
                         logger.info(f"Found locality '{locality}' in province '{prov_code}' ({prov_name})")
+            
+            # Add a delay between requests to respect rate limit (10 requests per second)
+            await asyncio.sleep(0.15)  # 150ms delay between requests
         
         except Exception as e:
             logger.error(f"Error checking province {prov_code}: {e}")
