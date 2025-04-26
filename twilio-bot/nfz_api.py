@@ -170,7 +170,7 @@ class NFZApiClient:
                         query_params.append(f"{key}={value}")
         
         full_url = f"{url}?{'&'.join(query_params)}"
-        logger.info(f"Request URL: {full_url}")
+        
         return full_url
     
     async def _request(self, session: aiohttp.ClientSession, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -189,14 +189,10 @@ class NFZApiClient:
             Exception: If the API request fails
         """
         url = self._build_url(endpoint, params)
-        logger.info(f"Making request to: {url}")
-        logger.info(f"Request parameters: {params}")
         
         try:
             async with session.get(url) as response:
-                response_text = await response.text()
-                logger.info(f"Response status: {response.status}")
-                logger.info(f"Response content: {response_text[:500]}...")  # Log first 500 chars
+                response_text = await response.text()                                
                 
                 if not response.ok:
                     logger.error(f"Request failed with status {response.status}: {response_text}")
@@ -328,144 +324,6 @@ def format_visit_results(queues: List[Queue]) -> str:
         result += f"   Available date: {date}\n\n"
     
     return result 
-
-
-# Helper function to verify locality belongs to a province
-async def verify_locality_province(locality: str, province: province_codes) -> dict:
-    """
-    Verify if a locality belongs to the specified province
-    
-    Args:
-        locality: Name of the locality
-        province: Province code
-        
-    Returns:
-        Dictionary with validation results:
-        {
-            "is_valid": True/False,
-            "matched_provinces": [list of provinces if not valid],
-            "message": Explanation message
-        }
-    """
-    logger.info(f"Verifying if locality '{locality}' belongs to province '{province}'")
-    
-    # Mapping of province codes to names for reference
-    provinces = {
-        "01": "DOLNOŚLĄSKIE",
-        "02": "KUJAWSKO-POMORSKIE",
-        "03": "LUBELSKIE",
-        "04": "LUBUSKIE",
-        "05": "ŁÓDZKIE",
-        "06": "MAŁOPOLSKIE",
-        "07": "MAZOWIECKIE",
-        "08": "OPOLSKIE",
-        "09": "PODKARPACKIE",
-        "10": "PODLASKIE",
-        "11": "POMORSKIE",
-        "12": "ŚLĄSKIE",
-        "13": "ŚWIĘTOKRZYSKIE",
-        "14": "WARMIŃSKO-MAZURSKIE",
-        "15": "WIELKOPOLSKIE",
-        "16": "ZACHODNIOPOMORSKIE",
-    }
-    
-    # Default response
-    result = {
-        "is_valid": False,
-        "matched_provinces": [],
-        "message": ""
-    }
-    
-    # Check if locality is too short
-    if not locality or len(locality) < 3:
-        result["message"] = f"Locality name too short (min 3 chars): '{locality}'"
-        logger.warning(result["message"])
-        return result
-    
-    client = NFZApiClient()
-    
-    # First check if locality exists in the specified province
-    search_params = {
-        "name": locality,
-        "province": province,
-        "limit": 10,
-        "format": "json"
-    }
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            url = client._build_url("/localities", search_params)
-            async with session.get(url) as response:
-                response_text = await response.text()
-                
-                if not response.ok:
-                    logger.error(f"Locality verification failed with status {response.status}: {response_text}")
-                    result["message"] = f"API error while verifying locality"
-                    return result
-                
-                data = await response.json()
-                
-                if "errors" in data:
-                    error = data["errors"][0]
-                    logger.error(f"Locality verification API error: {error}")
-                    result["message"] = f"API error: {error.get('error-reason', 'Unknown error')}"
-                    return result
-                
-                localities = data.get("data", [])
-                
-                # If we found the locality in this province, it's valid
-                if len(localities) > 0:
-                    result["is_valid"] = True
-                    result["message"] = f"Locality '{locality}' found in province '{province}' ({provinces.get(province, 'Unknown')})"
-                    logger.info(result["message"])
-                    return result
-    
-        # If we get here, locality wasn't found in the specified province
-        # Now check all other provinces to see if it exists somewhere else
-        all_provinces = list(provinces.keys())
-        
-        for prov_code in all_provinces:
-            if prov_code == province:
-                continue  # Already checked
-                
-            search_params = {
-                "name": locality,
-                "province": prov_code,
-                "limit": 1,
-                "format": "json"
-            }
-            
-            async with aiohttp.ClientSession() as session:
-                url = client._build_url("/localities", search_params)
-                async with session.get(url) as response:
-                    if not response.ok:
-                        continue
-                    
-                    data = await response.json()
-                    
-                    if "errors" in data:
-                        continue
-                    
-                    localities = data.get("data", [])
-                    if len(localities) > 0:
-                        result["matched_provinces"].append(prov_code)
-                        logger.info(f"Found locality '{locality}' in province '{prov_code}' ({provinces.get(prov_code, 'Unknown')})")
-        
-        # Construct the result message
-        if result["matched_provinces"]:
-            province_names = [f"{p} ({provinces.get(p, 'Unknown')})" for p in result["matched_provinces"]]
-            result["message"] = f"Locality '{locality}' not found in province '{province}' ({provinces.get(province, 'Unknown')}). " \
-                               f"It was found in: {', '.join(province_names)}"
-        else:
-            result["message"] = f"Locality '{locality}' not found in any province"
-            
-        logger.info(result["message"])
-        return result
-                
-    except Exception as e:
-        logger.error(f"Locality verification failed: {e}")
-        result["message"] = f"Error verifying locality: {str(e)}"
-        return result 
 
 
 # Helper function to find province code for a locality

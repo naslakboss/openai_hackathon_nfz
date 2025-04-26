@@ -2,10 +2,10 @@ from __future__ import annotations as _annotations
 
 import asyncio
 import uuid
+import time
 
 from agents import (
     Agent,
-    HandoffOutputItem,
     ItemHelpers,
     MessageOutputItem,
     Runner,
@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from bot_types import benefit_names, province_codes
 
 # Import the NFZ API functions
-from nfz_api import find_available_visits, format_visit_results, verify_locality_province, find_province_for_locality
+from nfz_api import find_available_visits, format_visit_results, find_province_for_locality
 
 load_dotenv()
 
@@ -134,34 +134,96 @@ nfz_agent = Agent(
 async def main():
     current_agent: Agent = nfz_agent
     input_items: list[TResponseInputItem] = []
-
-    # Normally, each input from the user would be an API request to your app, and you can wrap the request in a trace()
-    # Here, we'll just use a random UUID for the conversation ID
+    
+    # Generate a conversation ID
     conversation_id = uuid.uuid4().hex[:16]
-
+    
+    # Start with an empty input to get the initial AI message
+    print("\n=== NFZ Health Fund Assistant ===")
+    print("Starting conversation...\n")
+    
+    # Add an initial input to start the conversation
+    input_items.append({"content": "Hello", "role": "user"})
+    
+    # Get the initial AI message
+    with trace("NFZ Agent", group_id=conversation_id):
+        result = await Runner.run(current_agent, input_items)
+        
+        for new_item in result.new_items:
+            agent_name = new_item.agent.name
+            if isinstance(new_item, MessageOutputItem):
+                print(f"{agent_name}: {ItemHelpers.text_message_output(new_item)}")
+            elif isinstance(new_item, ToolCallItem):
+                print(f"{agent_name}: Calling a tool...")
+            elif isinstance(new_item, ToolCallOutputItem):
+                print(f"{agent_name}: Tool call completed")
+            else:
+                print(f"{agent_name}: Processing...")
+        
+        input_items = result.to_input_list()
+        current_agent = result.last_agent
+    
+    # Main conversation loop
     while True:
-        user_input = input("Enter your message: ")
+        # Get user input
+        user_input = input("\nYou: ")
+        
+        # Check for exit command
+        if user_input.lower() in ["exit", "quit", "bye"]:
+            print("\nThank you for using the NFZ Health Fund Assistant. Goodbye!")
+            break
+        
+        # Process user input
+        print("\nProcessing your request...")
+        start_time = time.time()
+        
         with trace("NFZ Agent", group_id=conversation_id):
             input_items.append({"content": user_input, "role": "user"})
-            result = await Runner.run(current_agent, input_items)
+            
+            # Show progress indicator for long-running operations
+            progress_task = asyncio.create_task(show_progress_indicator())
+            
+            try:
+                result = await Runner.run(current_agent, input_items)
+                progress_task.cancel()
+                
+                # Calculate processing time
+                elapsed_time = time.time() - start_time
+                if elapsed_time > 1.0:
+                    print(f"\nRequest processed in {elapsed_time:.1f} seconds")
+                
+                # Process and display results
+                for new_item in result.new_items:
+                    agent_name = new_item.agent.name
+                    if isinstance(new_item, MessageOutputItem):
+                        print(f"\n{agent_name}: {ItemHelpers.text_message_output(new_item)}")
+                    elif isinstance(new_item, ToolCallItem):
+                        print(f"\n{agent_name}: Calling a tool...")
+                    elif isinstance(new_item, ToolCallOutputItem):
+                        print(f"\n{agent_name}: Tool call completed")
+                    else:
+                        print(f"\n{agent_name}: Processing...")
+                
+                input_items = result.to_input_list()
+                current_agent = result.last_agent
+                
+            except Exception as e:
+                progress_task.cancel()
+                print(f"\nError: {str(e)}")
+                print("Please try again or type 'exit' to quit.")
 
-            for new_item in result.new_items:
-                agent_name = new_item.agent.name
-                if isinstance(new_item, MessageOutputItem):
-                    print(f"{agent_name}: {ItemHelpers.text_message_output(new_item)}")
-                elif isinstance(new_item, HandoffOutputItem):
-                    print(
-                        f"Handed off from {new_item.source_agent.name} to {new_item.target_agent.name}"
-                    )
-                elif isinstance(new_item, ToolCallItem):
-                    print(f"{agent_name}: Calling a tool")
-                elif isinstance(new_item, ToolCallOutputItem):
-                    print(f"{agent_name}: Tool call output: {new_item.output}")
-                else:
-                    print(f"{agent_name}: Skipping item: {new_item.__class__.__name__}")
-            input_items = result.to_input_list()
-            current_agent = result.last_agent
-
+async def show_progress_indicator():
+    """Show a progress indicator during long-running operations"""
+    indicators = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    i = 0
+    
+    try:
+        while True:
+            print(f"\r{indicators[i]} Processing...", end="", flush=True)
+            i = (i + 1) % len(indicators)
+            await asyncio.sleep(0.1)
+    except asyncio.CancelledError:
+        print("\r", end="", flush=True)  # Clear the progress indicator
 
 if __name__ == "__main__":
     asyncio.run(main())
