@@ -31,7 +31,6 @@ from pipecat.processors.aggregators.llm_response import (
     LLMUserResponseAggregator,
 )
 from pipecat.frames.frames import LLMMessagesFrame
-from pipecatcloud import WebSocketSessionArguments
 from OpenAiAgentProcessor import OpenAiAgentProcessor
 
 load_dotenv(override=True)
@@ -150,20 +149,3 @@ def get_stt():
         prompt="Transcribe the following conversation",
         temperature=0.0,
     )
-
-
-async def bot(args: WebSocketSessionArguments):
-    """Main bot entry point for WebSocket connections.
-
-    Args:
-        ws: The WebSocket connection
-        session_logger: The session-specific logger
-    """
-    logger.info("WebSocket bot process initialized")
-
-    try:
-        await run_bot(args.websocket, args.stream_sid, True)
-        logger.info("WebSocket bot process completed")
-    except Exception as e:
-        logger.exception(f"Error in WebSocket bot process: {str(e)}")
-        raise
