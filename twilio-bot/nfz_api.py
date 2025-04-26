@@ -1,7 +1,11 @@
 from typing import Dict, List, Optional, Union, TypedDict, Any, Literal
 import aiohttp
 from urllib.parse import quote
+import logging
 
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Province codes mapped to voivodeships in Poland
 PROVINCES = {
@@ -23,6 +27,67 @@ PROVINCES = {
     "16": "ZACHODNIOPOMORSKIE",
 }
 
+# Mapping from common names to province codes
+PROVINCE_NAMES_TO_CODES = {
+    "krakow": "06",
+    "cracow": "06",
+    "małopolska": "06",
+    "malopolska": "06",
+    "małopolskie": "06",
+    "warszawa": "07",
+    "warsaw": "07",
+    "mazowsze": "07", 
+    "mazowieckie": "07",
+    "gdańsk": "11",
+    "gdansk": "11",
+    "pomorze": "11",
+    "pomorskie": "11",
+    "wrocław": "01",
+    "wroclaw": "01",
+    "dolnośląskie": "01",
+    "dolnoslaskie": "01",
+    "poznań": "15",
+    "poznan": "15",
+    "wielkopolska": "15",
+    "wielkopolskie": "15",
+    "łódź": "05",
+    "lodz": "05",
+    "łódzkie": "05",
+    "lodzkie": "05",
+    "bydgoszcz": "02",
+    "kujawsko-pomorskie": "02",
+    "lublin": "03",
+    "lubelskie": "03",
+    "zielona góra": "04",
+    "gorzów": "04",
+    "lubuskie": "04",
+    "opole": "08",
+    "opolskie": "08",
+    "rzeszów": "09",
+    "rzeszow": "09",
+    "podkarpacie": "09",
+    "podkarpackie": "09",
+    "białystok": "10",
+    "bialystok": "10",
+    "podlasie": "10",
+    "podlaskie": "10",
+    "katowice": "12",
+    "śląsk": "12",
+    "slask": "12",
+    "śląskie": "12",
+    "slaskie": "12",
+    "kielce": "13",
+    "świętokrzyskie": "13",
+    "swietokrzyskie": "13",
+    "olsztyn": "14",
+    "warmia": "14",
+    "mazury": "14",
+    "warmińsko-mazurskie": "14",
+    "warminsko-mazurskie": "14",
+    "szczecin": "16",
+    "zachodniopomorskie": "16",
+}
+
 # Common benefit types
 COMMON_BENEFITS = {
     "PORADNIA KARDIOLOGICZNA": "Poradnia kardiologiczna",
@@ -33,6 +98,7 @@ COMMON_BENEFITS = {
     "PORADNIA UROLOGICZNA": "Poradnia urologiczna",
     "PORADNIA CHIRURGII OGÓLNEJ": "Poradnia chirurgii ogólnej",
     "PORADNIA OTOLARYNGOLOGICZNA": "Poradnia otolaryngologiczna",
+    "PORADNIA LARYNGOLOGICZNA": "Poradnia laryngologiczna",
     "PORADNIA DERMATOLOGICZNA": "Poradnia dermatologiczna",
     "PORADNIA ENDOKRYNOLOGICZNA": "Poradnia endokrynologiczna",
     "PORADNIA DIABETOLOGICZNA": "Poradnia diabetologiczna",
@@ -50,6 +116,68 @@ COMMON_BENEFITS = {
     "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - GASTROSKOPIA": "Gastroskopia",
     "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - KOLONOSKOPIA": "Kolonoskopia",
     "PORADNIA STOMATOLOGICZNA": "Poradnia stomatologiczna",
+}
+
+# Mapping from common names to benefit codes
+BENEFIT_NAMES_TO_CODES = {
+    "eye": "PORADNIA OKULISTYCZNA",
+    "eyes": "PORADNIA OKULISTYCZNA",
+    "ophthalmology": "PORADNIA OKULISTYCZNA",
+    "ophthalmologist": "PORADNIA OKULISTYCZNA",
+    "oculist": "PORADNIA OKULISTYCZNA",
+    "ear": "PORADNIA OTOLARYNGOLOGICZNA",
+    "ears": "PORADNIA OTOLARYNGOLOGICZNA",
+    "nose": "PORADNIA OTOLARYNGOLOGICZNA",
+    "throat": "PORADNIA OTOLARYNGOLOGICZNA",
+    "laryngology": "PORADNIA OTOLARYNGOLOGICZNA",
+    "laryngologist": "PORADNIA OTOLARYNGOLOGICZNA",
+    "otolaryngology": "PORADNIA OTOLARYNGOLOGICZNA",
+    "otolaryngologist": "PORADNIA OTOLARYNGOLOGICZNA",
+    "ent": "PORADNIA OTOLARYNGOLOGICZNA",
+    "heart": "PORADNIA KARDIOLOGICZNA",
+    "cardiology": "PORADNIA KARDIOLOGICZNA",
+    "cardiologist": "PORADNIA KARDIOLOGICZNA",
+    "neurology": "PORADNIA NEUROLOGICZNA",
+    "neurologist": "PORADNIA NEUROLOGICZNA",
+    "orthopaedics": "PORADNIA ORTOPEDYCZNA",
+    "orthopedics": "PORADNIA ORTOPEDYCZNA",
+    "orthopedist": "PORADNIA ORTOPEDYCZNA",
+    "orthopaedist": "PORADNIA ORTOPEDYCZNA",
+    "gynecology": "PORADNIA GINEKOLOGICZNO-POŁOŻNICZA",
+    "gynecologist": "PORADNIA GINEKOLOGICZNO-POŁOŻNICZA",
+    "obstetrics": "PORADNIA GINEKOLOGICZNO-POŁOŻNICZA",
+    "urology": "PORADNIA UROLOGICZNA",
+    "urologist": "PORADNIA UROLOGICZNA",
+    "surgery": "PORADNIA CHIRURGII OGÓLNEJ",
+    "surgeon": "PORADNIA CHIRURGII OGÓLNEJ",
+    "dermatology": "PORADNIA DERMATOLOGICZNA",
+    "dermatologist": "PORADNIA DERMATOLOGICZNA",
+    "skin": "PORADNIA DERMATOLOGICZNA",
+    "endocrinology": "PORADNIA ENDOKRYNOLOGICZNA",
+    "endocrinologist": "PORADNIA ENDOKRYNOLOGICZNA",
+    "diabetes": "PORADNIA DIABETOLOGICZNA",
+    "diabetologist": "PORADNIA DIABETOLOGICZNA",
+    "gastroenterology": "PORADNIA GASTROENTEROLOGICZNA",
+    "gastroenterologist": "PORADNIA GASTROENTEROLOGICZNA",
+    "rheumatology": "PORADNIA REUMATOLOGICZNA",
+    "rheumatologist": "PORADNIA REUMATOLOGICZNA",
+    "pulmonology": "PORADNIA PULMONOLOGICZNA",
+    "pulmonologist": "PORADNIA PULMONOLOGICZNA",
+    "lungs": "PORADNIA PULMONOLOGICZNA",
+    "psychiatry": "PORADNIA ZDROWIA PSYCHICZNEGO",
+    "psychiatrist": "PORADNIA ZDROWIA PSYCHICZNEGO",
+    "psychology": "PORADNIA ZDROWIA PSYCHICZNEGO",
+    "psychologist": "PORADNIA ZDROWIA PSYCHICZNEGO",
+    "mental health": "PORADNIA ZDROWIA PSYCHICZNEGO",
+    "tomography": "TOMOGRAFIA KOMPUTEROWA",
+    "ct scan": "TOMOGRAFIA KOMPUTEROWA",
+    "ct": "TOMOGRAFIA KOMPUTEROWA",
+    "mri": "REZONANS MAGNETYCZNY",
+    "magnetic resonance": "REZONANS MAGNETYCZNY",
+    "gastroscopy": "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - GASTROSKOPIA",
+    "colonoscopy": "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - KOLONOSKOPIA",
+    "dentist": "PORADNIA STOMATOLOGICZNA",
+    "dental": "PORADNIA STOMATOLOGICZNA",
 }
 
 # Treatment priority/case types
@@ -214,7 +342,9 @@ class NFZApiClient:
                     else:
                         query_params.append(f"{key}={value}")
         
-        return f"{url}?{'&'.join(query_params)}"
+        full_url = f"{url}?{'&'.join(query_params)}"
+        logger.info(f"Request URL: {full_url}")
+        return full_url
     
     async def _request(self, session: aiohttp.ClientSession, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -232,22 +362,30 @@ class NFZApiClient:
             Exception: If the API request fails
         """
         url = self._build_url(endpoint, params)
+        logger.info(f"Making request to: {url}")
+        logger.info(f"Request parameters: {params}")
         
         try:
             async with session.get(url) as response:
+                response_text = await response.text()
+                logger.info(f"Response status: {response.status}")
+                logger.info(f"Response content: {response_text[:500]}...")  # Log first 500 chars
+                
                 if not response.ok:
-                    error_text = await response.text()
-                    raise Exception(f"NFZ API request failed: {response.status} {response.reason} - {error_text}")
+                    logger.error(f"Request failed with status {response.status}: {response_text}")
+                    raise Exception(f"NFZ API request failed: {response.status} {response.reason} - {response_text}")
                 
                 data = await response.json()
                 
                 if "errors" in data:
                     error = data["errors"][0]
-                    raise Exception(f"NFZ API error: {error.get('error-reason')} - {error.get('error-solution')}")
+                    error_msg = f"NFZ API error: {error.get('error-reason')} - {error.get('error-solution')}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
                 
                 return data
         except Exception as e:
-            print(f"NFZ API request failed: {e}")
+            logger.error(f"NFZ API request failed: {e}")
             raise
     
     async def get_queues(self, params: QueueSearchParams) -> QueuesResponse:
@@ -263,6 +401,8 @@ class NFZApiClient:
         search_params = dict(params)
         # Ensure we get JSON format
         search_params["format"] = "json"
+        
+        logger.info(f"Searching queues with parameters: {search_params}")
         
         async with aiohttp.ClientSession() as session:
             return await self._request(session, "/queues", search_params)
@@ -305,42 +445,73 @@ async def find_available_visits(province: str, medical_service: str, for_childre
     Returns:
         List of available visits sorted by earliest date
     """
+    logger.info(f"Finding visits for province: '{province}', service: '{medical_service}', for_children: {for_children}")
+    
     # Convert province name to code if needed
     province_code = province
     if len(province) != 2:  # Not a province code
-        # Find matching province code
-        for code, name in PROVINCES.items():
-            if name.lower() == province.lower():
-                province_code = code
-                break
+        # Try to find in common names mapping first
+        province_code_from_map = PROVINCE_NAMES_TO_CODES.get(province.lower())
+        if province_code_from_map:
+            province_code = province_code_from_map
+            logger.info(f"Mapped province '{province}' to code '{province_code}'")
+        else:
+            # Try to find matching province code from the official names
+            found = False
+            for code, name in PROVINCES.items():
+                if name.lower() == province.lower():
+                    province_code = code
+                    found = True
+                    logger.info(f"Matched province '{province}' to code '{province_code}'")
+                    break
+            
+            if not found:
+                logger.warning(f"Could not map province '{province}' to a valid code, using as-is")
     
+    logger.info(f"Using province code: {province_code}")
+    
+    # If medical service is in the common names mapping, use the mapped code
+    benefit_code_from_map = BENEFIT_NAMES_TO_CODES.get(medical_service.lower())
+    if benefit_code_from_map:
+        benefit = benefit_code_from_map
+        logger.info(f"Mapped service '{medical_service}' to '{benefit}'")
     # If medical service is a common benefit key, use it directly
-    if medical_service.upper() in COMMON_BENEFITS:
+    elif medical_service.upper() in COMMON_BENEFITS:
         benefit = medical_service.upper()
+        logger.info(f"Using service as-is: '{benefit}'")
     else:
         # Try to find a matching common benefit
         benefit = None
         for key, value in COMMON_BENEFITS.items():
             if medical_service.lower() in value.lower():
                 benefit = key
+                logger.info(f"Matched service '{medical_service}' to '{benefit}'")
                 break
         
         # If no match found, use the provided service name
         if not benefit:
             benefit = medical_service.upper()
+            logger.info(f"No match found for service '{medical_service}', using as-is: '{benefit}'")
     
     # Create API client
     client = NFZApiClient()
     
-    # Search for available queues
-    response = await client.get_queues({
+    # Prepare search parameters
+    search_params = {
         "case": 1,  # Stable case
         "province": province_code,
         "benefit": benefit,
         "benefitForChildren": for_children,
         "limit": limit,
         "format": "json"
-    })
+    }
+    
+    logger.info(f"Final search parameters: {search_params}")
+    
+    # Search for available queues
+    response = await client.get_queues(search_params)
+    
+    logger.info(f"Found {len(response['data'])} queues")
     
     # Return the queues data
     return response["data"]
