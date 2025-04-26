@@ -36,16 +36,16 @@ async def main():
         )
         
         # Print full JSON response for debugging
-        print("\nRaw JSON response (first queue only):")
-        if queues:
-            print(json.dumps(queues[0], indent=2, ensure_ascii=False)[:1000] + "...(truncated)")
-        else:
-            print("No queues found")
+        # print("\nRaw JSON response (first queue only):")
+        # if queues:
+        #     print(json.dumps(queues[0], indent=2, ensure_ascii=False)[:1000] + "...(truncated)")
+        # else:
+        #     print("No queues found")
         
         # Format and print the results in a human-readable way
-        print("\nFormatted results:")
+        # print("\nFormatted results:")
         formatted_results = format_visit_results(queues)
-        print(formatted_results)
+        # print(formatted_results)
         
     except Exception as e:
         print(f"Error: {e}")
