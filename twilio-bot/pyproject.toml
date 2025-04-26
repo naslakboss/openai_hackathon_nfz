@@ -20,6 +20,7 @@ dependencies = [
     "mcp>=1.6.0",
     "loguru",
     "openai-agents",
+    "twilio>=9.5.2",
     "pipecatcloud==0.1.5"
 ]
 
