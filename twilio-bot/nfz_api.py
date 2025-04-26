@@ -3,10 +3,15 @@ import aiohttp
 from urllib.parse import quote
 import logging
 from bot_types import benefit_names, province_codes
+import asyncio
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Set up logging - only show WARNING and above to reduce verbosity
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Disable aiohttp client logging
+logging.getLogger('aiohttp.client').setLevel(logging.WARNING)
+logging.getLogger('aiohttp.client_proto').setLevel(logging.WARNING)
 
 CaseType = Literal[1, 2]  # 1: Stable, 2: Urgent
 
@@ -170,7 +175,7 @@ class NFZApiClient:
                         query_params.append(f"{key}={value}")
         
         full_url = f"{url}?{'&'.join(query_params)}"
-        logger.info(f"Request URL: {full_url}")
+        
         return full_url
     
     async def _request(self, session: aiohttp.ClientSession, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -189,14 +194,10 @@ class NFZApiClient:
             Exception: If the API request fails
         """
         url = self._build_url(endpoint, params)
-        logger.info(f"Making request to: {url}")
-        logger.info(f"Request parameters: {params}")
         
         try:
             async with session.get(url) as response:
-                response_text = await response.text()
-                logger.info(f"Response status: {response.status}")
-                logger.info(f"Response content: {response_text[:500]}...")  # Log first 500 chars
+                response_text = await response.text()                                
                 
                 if not response.ok:
                     logger.error(f"Request failed with status {response.status}: {response_text}")
@@ -259,7 +260,7 @@ class NFZApiClient:
 
 
 # Helper function to find best available visits
-async def find_available_visits(province: province_codes, benefit: benefit_names, for_children: bool = False, limit: int = 5) -> List[Queue]:
+async def find_available_visits(province: province_codes, benefit: benefit_names, locality: str, for_children: bool = False, limit: int = 5) -> List[Queue]:
     """
     Find available visits based on province and medical service
     
@@ -272,7 +273,7 @@ async def find_available_visits(province: province_codes, benefit: benefit_names
     Returns:
         List of available visits sorted by earliest date
     """
-    logger.info(f"Finding visits for province: '{province}', service: '{benefit}', for_children: {for_children}")
+    logger.info(f"Finding visits for province: '{province}', service: '{benefit}', locality: '{locality}', for_children: {for_children}")
 
     client = NFZApiClient()
     
@@ -281,12 +282,16 @@ async def find_available_visits(province: province_codes, benefit: benefit_names
         "case": 1,  # Stable case
         "province": province,
         "benefit": benefit,
+        "locality": locality,
         "benefitForChildren": for_children,
         "limit": limit,
         "format": "json"
     }
     
     logger.info(f"Final search parameters: {search_params}")
+    
+    # Add a delay before making the request to respect rate limit
+    await asyncio.sleep(0.2)  # 200ms delay
     
     # Search for available queues
     response = await client.get_queues(search_params)
@@ -325,5 +330,116 @@ def format_visit_results(queues: List[Queue]) -> str:
         result += f"   Address: {address}\n"
         result += f"   Phone: {phone}\n"
         result += f"   Available date: {date}\n\n"
+    
+    return result 
+
+
+# Helper function to find province code for a locality
+async def find_province_for_locality(locality: str) -> dict:
+    """
+    Find the province code for a given locality
+    
+    Args:
+        locality: Name of the locality
+        
+    Returns:
+        Dictionary with results:
+        {
+            "found": True/False,
+            "province_code": Code if found, None if not,
+            "province_name": Name if found, None if not,
+            "message": Explanation message
+        }
+    """
+    logger.info(f"Finding province for locality '{locality}'")
+    
+    # Default response
+    result = {
+        "found": False,
+        "province_code": None,
+        "province_name": None,
+        "message": ""
+    }
+    
+    # Mapping of province codes to names for reference
+    provinces = {
+        "01": "DOLNOŚLĄSKIE",
+        "02": "KUJAWSKO-POMORSKIE",
+        "03": "LUBELSKIE",
+        "04": "LUBUSKIE",
+        "05": "ŁÓDZKIE",
+        "06": "MAŁOPOLSKIE",
+        "07": "MAZOWIECKIE",
+        "08": "OPOLSKIE",
+        "09": "PODKARPACKIE",
+        "10": "PODLASKIE",
+        "11": "POMORSKIE",
+        "12": "ŚLĄSKIE",
+        "13": "ŚWIĘTOKRZYSKIE",
+        "14": "WARMIŃSKO-MAZURSKIE",
+        "15": "WIELKOPOLSKIE",
+        "16": "ZACHODNIOPOMORSKIE",
+    }
+    
+    # Check if locality is too short
+    if not locality or len(locality) < 3:
+        result["message"] = f"Locality name too short (min 3 chars): '{locality}'"
+        logger.warning(result["message"])
+        return result
+    
+    client = NFZApiClient()
+    matching_provinces = []
+    
+    # Check each province for the locality
+    for prov_code, prov_name in provinces.items():
+        try:
+            # Prepare search parameters
+            search_params = {
+                "name": locality,
+                "province": prov_code,
+                "limit": 1,
+                "format": "json"
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                url = client._build_url("/localities", search_params)
+                async with session.get(url) as response:
+                    if not response.ok:
+                        continue
+                    
+                    data = await response.json()
+                    
+                    if "errors" in data:
+                        continue
+                    
+                    localities = data.get("data", [])
+                    if len(localities) > 0:
+                        matching_provinces.append((prov_code, prov_name))
+                        logger.info(f"Found locality '{locality}' in province '{prov_code}' ({prov_name})")
+            
+            # Add a delay between requests to respect rate limit (10 requests per second)
+            await asyncio.sleep(0.15)  # 150ms delay between requests
+        
+        except Exception as e:
+            logger.error(f"Error checking province {prov_code}: {e}")
+    
+    # Determine the result based on matches
+    if len(matching_provinces) == 1:
+        # Perfect match - only one province contains this locality
+        prov_code, prov_name = matching_provinces[0]
+        result["found"] = True
+        result["province_code"] = prov_code
+        result["province_name"] = prov_name
+        result["message"] = f"Found locality '{locality}' in province '{prov_name}' (code: {prov_code})"
+        logger.info(result["message"])
+    elif len(matching_provinces) > 1:
+        # Multiple matches - return all matches in message
+        result["message"] = f"Locality '{locality}' found in multiple provinces: "
+        result["message"] += ", ".join([f"{name} (code: {code})" for code, name in matching_provinces])
+        logger.info(result["message"])
+    else:
+        # No matches
+        result["message"] = f"Locality '{locality}' not found in any province"
+        logger.warning(result["message"])
     
     return result 
