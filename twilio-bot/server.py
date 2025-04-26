@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import os
 
 import uvicorn
 from bot import run_bot
@@ -23,10 +24,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def start_call_get():
+    print("GET TwiML")
+    print("Current working directory:", os.getcwd())
+    return HTMLResponse(content=open("templates/streams.xml").read(), media_type="application/xml")
+
 
 @app.post("/")
 async def start_call():
     print("POST TwiML")
+    print("Current working directory:", os.getcwd())
     return HTMLResponse(content=open("templates/streams.xml").read(), media_type="application/xml")
 
 
