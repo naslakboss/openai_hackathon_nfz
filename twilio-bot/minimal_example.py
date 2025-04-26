@@ -103,9 +103,9 @@ async def visits(medical_service: benefit_names, locality: str) -> str:
         visit_count = len(queues) if queues else 0
         
         if visit_count > 0:
-            return f"Hello {user_name}, I found {visit_count} available visits for {medical_service} in province {province_code}:\n\n{result}"
+            return f"Hello User, I found {visit_count} available visits for {medical_service} in province {province_code}:\n\n{result}"
         else:
-            return f"Hello {user_name}, I couldn't find any available visits for {medical_service} in province {province_code}."
+            return f"Hello User, I couldn't find any available visits for {medical_service} in province {province_code}."
     
     except Exception as e:
         print(f"Error querying NFZ API: {e}")
@@ -114,17 +114,18 @@ async def visits(medical_service: benefit_names, locality: str) -> str:
 @function_tool(
     name_override="send_sms_summary", description_override="Send a summary of available visits via SMS."
 )
-async def send_sms_summary(user_name: str, visit_results: str) -> str:
+async def send_sms_summary(visit_results: str) -> str:
     """
     Send a summary of available visits to the user via SMS using Twilio.
     
     Args:
-        user_name: Name of the user
+        
         visit_results: The formatted visit results to send
         
     Returns:
         Confirmation message about the SMS status
     """
+    user_name = "User"
     # Access the caller number from the function's attribute
     phone_number = getattr(send_sms_summary, 'caller_number', "+48792174616")
     
@@ -157,7 +158,7 @@ nfz_agent = Agent(
     
     Keep your messages short and use simple language. Speak slowly and clearly. Avoid complicated terms. Repeat important information.
     
-    You need to gather only two pieces of information:
+    You need to gather two pieces of information:    
     1. What type of doctor they need to see
     2. What city they live in
     
