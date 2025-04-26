@@ -27,7 +27,7 @@ from twilio_sms import TwilioSMS
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger('agents').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)
-from nfz_api import find_available_visits, format_visit_results, verify_locality_province, find_province_for_locality
+from nfz_api import find_available_visits, format_visit_results, find_province_for_locality
 
 load_dotenv()
 
