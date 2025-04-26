@@ -4,9 +4,13 @@ from urllib.parse import quote
 import logging
 from bot_types import benefit_names, province_codes
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Set up logging - only show WARNING and above to reduce verbosity
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Disable aiohttp client logging
+logging.getLogger('aiohttp.client').setLevel(logging.WARNING)
+logging.getLogger('aiohttp.client_proto').setLevel(logging.WARNING)
 
 CaseType = Literal[1, 2]  # 1: Stable, 2: Urgent
 
