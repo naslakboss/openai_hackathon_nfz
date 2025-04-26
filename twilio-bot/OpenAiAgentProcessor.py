@@ -9,17 +9,20 @@ from pipecat.frames.frames import (
 from openai.types.responses import ResponseTextDeltaEvent
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from minimal_example import nfz_agent
-# todo add memory, and tools
+from minimal_example import send_sms_summary
 
 class OpenAiAgentProcessor(FrameProcessor):
-    def __init__(self, participant_id: str):
+    def __init__(self, participant_id: str, caller_number: str = None):
         super().__init__()
         self._participant_id = participant_id
+        self.caller_number = caller_number
         self.input_items: list[TResponseInputItem] = []
         self._agent = nfz_agent
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
+
+        send_sms_summary.caller_number = self.caller_number
 
         if isinstance(frame, LLMMessagesFrame):
             # Messages are accumulated on the context as a list of messages.

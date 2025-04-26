@@ -36,7 +36,7 @@ from OpenAiAgentProcessor import OpenAiAgentProcessor
 load_dotenv(override=True)
 
 logger.remove(0)
-logger.add(sys.stderr, level="DEBUG")
+logger.add(sys.stderr, level="CRITICAL")
 
 
 async def save_audio(server_name: str, audio: bytes, sample_rate: int, num_channels: int):
@@ -57,7 +57,7 @@ async def save_audio(server_name: str, audio: bytes, sample_rate: int, num_chann
         logger.info("No audio data to save")
 
 
-async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
+async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool, caller_number: str = None):
     transport = FastAPIWebsocketTransport(
         websocket=websocket_client,
         params=FastAPIWebsocketParams(
@@ -74,7 +74,7 @@ async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
     stt = get_stt()
     tts = get_tts()
     
-    openai_agent_processor = OpenAiAgentProcessor(participant_id="a")
+    openai_agent_processor = OpenAiAgentProcessor(participant_id="a", caller_number=caller_number)
     user_agg = LLMUserResponseAggregator()
     assistant_agg = LLMAssistantResponseAggregator()
 
