@@ -2,94 +2,12 @@ from typing import Dict, List, Optional, Union, TypedDict, Any, Literal
 import aiohttp
 from urllib.parse import quote
 import logging
-from bot_types import benefit_names
+from bot_types import benefit_names, province_codes
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Province codes mapped to voivodeships in Poland
-PROVINCES = {
-    "01": "DOLNOŚLĄSKIE",
-    "02": "KUJAWSKO-POMORSKIE",
-    "03": "LUBELSKIE",
-    "04": "LUBUSKIE",
-    "05": "ŁÓDZKIE",
-    "06": "MAŁOPOLSKIE",
-    "07": "MAZOWIECKIE",
-    "08": "OPOLSKIE",
-    "09": "PODKARPACKIE",
-    "10": "PODLASKIE",
-    "11": "POMORSKIE",
-    "12": "ŚLĄSKIE",
-    "13": "ŚWIĘTOKRZYSKIE",
-    "14": "WARMIŃSKO-MAZURSKIE",
-    "15": "WIELKOPOLSKIE",
-    "16": "ZACHODNIOPOMORSKIE",
-}
-
-# Mapping from common names to province codes
-PROVINCE_NAMES_TO_CODES = {
-    "krakow": "06",
-    "cracow": "06",
-    "małopolska": "06",
-    "malopolska": "06",
-    "małopolskie": "06",
-    "warszawa": "07",
-    "warsaw": "07",
-    "mazowsze": "07", 
-    "mazowieckie": "07",
-    "gdańsk": "11",
-    "gdansk": "11",
-    "pomorze": "11",
-    "pomorskie": "11",
-    "wrocław": "01",
-    "wroclaw": "01",
-    "dolnośląskie": "01",
-    "dolnoslaskie": "01",
-    "poznań": "15",
-    "poznan": "15",
-    "wielkopolska": "15",
-    "wielkopolskie": "15",
-    "łódź": "05",
-    "lodz": "05",
-    "łódzkie": "05",
-    "lodzkie": "05",
-    "bydgoszcz": "02",
-    "kujawsko-pomorskie": "02",
-    "lublin": "03",
-    "lubelskie": "03",
-    "zielona góra": "04",
-    "gorzów": "04",
-    "lubuskie": "04",
-    "opole": "08",
-    "opolskie": "08",
-    "rzeszów": "09",
-    "rzeszow": "09",
-    "podkarpacie": "09",
-    "podkarpackie": "09",
-    "białystok": "10",
-    "bialystok": "10",
-    "podlasie": "10",
-    "podlaskie": "10",
-    "katowice": "12",
-    "śląsk": "12",
-    "slask": "12",
-    "śląskie": "12",
-    "slaskie": "12",
-    "kielce": "13",
-    "świętokrzyskie": "13",
-    "swietokrzyskie": "13",
-    "olsztyn": "14",
-    "warmia": "14",
-    "mazury": "14",
-    "warmińsko-mazurskie": "14",
-    "warminsko-mazurskie": "14",
-    "szczecin": "16",
-    "zachodniopomorskie": "16",
-}
-
-# Treatment priority/case types
 CaseType = Literal[1, 2]  # 1: Stable, 2: Urgent
 
 # Type definitions for API responses
@@ -341,7 +259,7 @@ class NFZApiClient:
 
 
 # Helper function to find best available visits
-async def find_available_visits(province: str, benefit: benefit_names, for_children: bool = False, limit: int = 5) -> List[Queue]:
+async def find_available_visits(province: province_codes, benefit: benefit_names, for_children: bool = False, limit: int = 5) -> List[Queue]:
     """
     Find available visits based on province and medical service
     

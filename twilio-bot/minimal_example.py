@@ -17,7 +17,7 @@ from agents import (
 )
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 from dotenv import load_dotenv
-from bot_types import benefit_names
+from bot_types import benefit_names, province_codes
 
 # Import the NFZ API functions
 from nfz_api import find_available_visits, format_visit_results
@@ -27,9 +27,29 @@ load_dotenv()
 @function_tool(
     name_override="visits", description_override="Lookup visits at the National Health Fund (NFZ)."
 )
-async def visits(location: str, medical_service: benefit_names, user_name: str) -> str:
+async def visits(province_code: province_codes, medical_service: benefit_names, user_name: str) -> str:
     """
     Look up available medical visits in the National Health Fund (NFZ)
+
+    Here are mappings for province codes
+    PROVINCES = {
+    "01": "DOLNOŚLĄSKIE",
+    "02": "KUJAWSKO-POMORSKIE",
+    "03": "LUBELSKIE",
+    "04": "LUBUSKIE",
+    "05": "ŁÓDZKIE",
+    "06": "MAŁOPOLSKIE",
+    "07": "MAZOWIECKIE",
+    "08": "OPOLSKIE",
+    "09": "PODKARPACKIE",
+    "10": "PODLASKIE",
+    "11": "POMORSKIE",
+    "12": "ŚLĄSKIE",
+    "13": "ŚWIĘTOKRZYSKIE",
+    "14": "WARMIŃSKO-MAZURSKIE",
+    "15": "WIELKOPOLSKIE",
+    "16": "ZACHODNIOPOMORSKIE",
+    }
     
     Args:
         location: Location or province name/code
@@ -39,12 +59,12 @@ async def visits(location: str, medical_service: benefit_names, user_name: str) 
     Returns:
         Information about available visits
     """
-    print(f"Checking NFZ API for {medical_service} in {location} for {user_name}")
+    print(f"Checking NFZ API for {medical_service} in {province_code} for {user_name}")
     
     try:
         # Query the NFZ API for available visits
         queues = await find_available_visits(
-            province=location,
+            province=province_code,
             benefit=medical_service,
             for_children=False,
             limit=5
@@ -56,7 +76,7 @@ async def visits(location: str, medical_service: benefit_names, user_name: str) 
     
     except Exception as e:
         print(f"Error querying NFZ API: {e}")
-        return f"Sorry {user_name}, I couldn't find any available visits for {medical_service} in {location} due to an error."
+        return f"Sorry {user_name}, I couldn't find any available visits for {medical_service} in {province_code} due to an error."
 
 nfz_agent = Agent(
     name="NFZ Agent",
