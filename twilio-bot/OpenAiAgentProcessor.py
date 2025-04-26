@@ -8,6 +8,7 @@ from pipecat.frames.frames import (
 
 from openai.types.responses import ResponseTextDeltaEvent
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
+from minimal_example import nfz_agent
 # todo add memory, and tools
 
 class OpenAiAgentProcessor(FrameProcessor):
@@ -15,10 +16,7 @@ class OpenAiAgentProcessor(FrameProcessor):
         super().__init__()
         self._participant_id = participant_id
         self.input_items: list[TResponseInputItem] = []
-        self._agent = Agent(
-            name="NFZ Assistant",
-            instructions="You are a helpful assistant.",
-        )
+        self._agent = nfz_agent
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
