@@ -61,26 +61,25 @@ async def find_province(locality: str) -> str:
 @function_tool(
     name_override="visits", description_override="Lookup visits at the National Health Fund (NFZ)."
 )
-async def visits(medical_service: benefit_names, locality: str, user_name: str) -> str:
+async def visits(medical_service: benefit_names, locality: str) -> str:
     """
     Look up available medical visits in the National Health Fund (NFZ)
     
     Args:
         medical_service: Type of medical service needed
         locality: Locality or city name
-        user_name: Name of the user requesting the visit
         
     Returns:
         Information about available visits
     """
-    print(f"Looking up visits for {medical_service} in {locality} for {user_name}")
+    print(f"Looking up visits for {medical_service} in {locality}")
     
     try:
         # First find the province code for the locality
         province_result = await find_province_for_locality(locality)
         
         if not province_result["found"]:
-            return f"Sorry {user_name}, I couldn't find your city '{locality}' in our system. Please check the spelling or try a nearby larger city."
+            return f"Sorry, I couldn't find your city '{locality}' in our system. Please check the spelling or try a nearby larger city."
         
         province_code = province_result["province_code"]
         province_name = province_result["province_name"]
@@ -98,11 +97,11 @@ async def visits(medical_service: benefit_names, locality: str, user_name: str) 
         
         # Format the results
         result = format_visit_results(queues)
-        return f"Hello {user_name}, I found these available appointments for {medical_service} in {locality}, {province_name}:\n\n{result}"
+        return f"I found these available appointments for {medical_service} in {locality}, {province_name}:\n\n{result}"
     
     except Exception as e:
         print(f"Error querying NFZ API: {e}")
-        return f"Sorry {user_name}, I couldn't find any available visits at this time. Please try again later or call our help line."
+        return f"Sorry, I couldn't find any available visits at this time. Please try again later or call our help line."
 
 nfz_agent = Agent(
     name="NFZ Agent",
@@ -113,10 +112,9 @@ nfz_agent = Agent(
     
     Keep your messages short and use simple language. Speak slowly and clearly. Avoid complicated terms. Repeat important information.
     
-    You need to gather only three pieces of information:
-    1. The person's first name
-    2. What type of doctor they need to see
-    3. What city they live in
+    You need to gather only two pieces of information:
+    1. What type of doctor they need to see
+    2. What city they live in
     
     Important rules for voice interaction with seniors:
     - Ask only ONE question at a time
@@ -127,11 +125,10 @@ nfz_agent = Agent(
     - Confirm information before proceeding
     
     Follow this exact order:
-    1. First, introduce yourself briefly and ask for their first name only
-    2. Thank them and ask what type of medical service they need
-    3. Ask what city they live in
+    1. First, introduce yourself briefly and ask what type of medical service they need
+    2. Ask what city they live in
     
-    Once you have all three pieces of information, use the visits tool to find available appointments.
+    Once you have both pieces of information, use the visits tool to find available appointments.
     Present the results clearly, focusing on location, date and contact information.
     """,
     tools=[find_province, visits],
@@ -149,7 +146,7 @@ async def main():
     print("Starting conversation...\n")
     
     # Add an initial input to start the conversation
-    input_items.append({"content": "Hello", "role": "user"})
+    input_items.append({"content": "", "role": "user"})
     
     # Get the initial AI message
     with trace("NFZ Agent", group_id=conversation_id):
