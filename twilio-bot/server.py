@@ -10,7 +10,7 @@ import os
 
 import uvicorn
 from bot import run_bot
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 
@@ -32,9 +32,14 @@ async def start_call_get():
 
 
 @app.post("/")
-async def start_call():
+async def start_call(request: Request):
     print("POST TwiML")
     print("Current working directory:", os.getcwd())
+    
+    form_data = await request.form()
+    caller_number = form_data.get("From")
+    print(f"Caller number from POST: {caller_number}", flush=True)
+    
     return HTMLResponse(content=open("templates/streams.xml").read(), media_type="application/xml")
 
 
@@ -46,8 +51,14 @@ async def websocket_endpoint(websocket: WebSocket):
     call_data = json.loads(await start_data.__anext__())
     print(call_data, flush=True)
     stream_sid = call_data["start"]["streamSid"]
+    
+    caller_number = None
+    if "start" in call_data and "customParameters" in call_data["start"]:
+        caller_number = call_data["start"]["customParameters"].get("From")
+    
+    print(f"Caller number: {caller_number}", flush=True)
     print("WebSocket connection accepted")
-    await run_bot(websocket, stream_sid, True)
+    await run_bot(websocket, stream_sid, True, caller_number)
 
 
 if __name__ == "__main__":
