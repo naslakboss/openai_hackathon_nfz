@@ -37,13 +37,10 @@ from loguru import logger
 
 load_dotenv(override=True)
 
-<<<<<<< HEAD
 logger.remove(0)
 logger.add(sys.stderr, level="CRITICAL")
 
 
-=======
->>>>>>> main
 async def save_audio(server_name: str, audio: bytes, sample_rate: int, num_channels: int):
     if len(audio) > 0:
         filename = (
