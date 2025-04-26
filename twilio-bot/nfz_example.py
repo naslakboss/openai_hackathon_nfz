@@ -30,7 +30,7 @@ async def main():
         # Query the NFZ API
         queues = await find_available_visits(
             province=province,
-            medical_service=service,
+            benefit=service,
             for_children=False,
             limit=5
         )

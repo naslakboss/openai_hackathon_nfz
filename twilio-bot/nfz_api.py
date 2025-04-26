@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Union, TypedDict, Any, Literal
 import aiohttp
 from urllib.parse import quote
 import logging
+from bot_types import benefit_names
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -86,98 +87,6 @@ PROVINCE_NAMES_TO_CODES = {
     "warminsko-mazurskie": "14",
     "szczecin": "16",
     "zachodniopomorskie": "16",
-}
-
-# Common benefit types
-COMMON_BENEFITS = {
-    "PORADNIA KARDIOLOGICZNA": "Poradnia kardiologiczna",
-    "PORADNIA OKULISTYCZNA": "Poradnia okulistyczna",
-    "PORADNIA NEUROLOGICZNA": "Poradnia neurologiczna",
-    "PORADNIA ORTOPEDYCZNA": "Poradnia ortopedyczna",
-    "PORADNIA GINEKOLOGICZNO-POŁOŻNICZA": "Poradnia ginekologiczno-położnicza",
-    "PORADNIA UROLOGICZNA": "Poradnia urologiczna",
-    "PORADNIA CHIRURGII OGÓLNEJ": "Poradnia chirurgii ogólnej",
-    "PORADNIA OTOLARYNGOLOGICZNA": "Poradnia otolaryngologiczna",
-    "PORADNIA LARYNGOLOGICZNA": "Poradnia laryngologiczna",
-    "PORADNIA DERMATOLOGICZNA": "Poradnia dermatologiczna",
-    "PORADNIA ENDOKRYNOLOGICZNA": "Poradnia endokrynologiczna",
-    "PORADNIA DIABETOLOGICZNA": "Poradnia diabetologiczna",
-    "PORADNIA GASTROENTEROLOGICZNA": "Poradnia gastroenterologiczna",
-    "PORADNIA REUMATOLOGICZNA": "Poradnia reumatologiczna",
-    "PORADNIA PULMONOLOGICZNA": "Poradnia pulmonologiczna",
-    "PORADNIA ZDROWIA PSYCHICZNEGO": "Poradnia zdrowia psychicznego",
-    "ODDZIAŁ CHORÓB WEWNĘTRZNYCH": "Oddział chorób wewnętrznych",
-    "ODDZIAŁ KARDIOLOGICZNY": "Oddział kardiologiczny",
-    "REHABILITACJA KARDIOLOGICZNA": "Rehabilitacja kardiologiczna",
-    "ODDZIAŁ CHIRURGII OGÓLNEJ": "Oddział chirurgii ogólnej",
-    "ODDZIAŁ ORTOPEDYCZNY": "Oddział ortopedyczny",
-    "TOMOGRAFIA KOMPUTEROWA": "Tomografia komputerowa",
-    "REZONANS MAGNETYCZNY": "Rezonans magnetyczny",
-    "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - GASTROSKOPIA": "Gastroskopia",
-    "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - KOLONOSKOPIA": "Kolonoskopia",
-    "PORADNIA STOMATOLOGICZNA": "Poradnia stomatologiczna",
-}
-
-# Mapping from common names to benefit codes
-BENEFIT_NAMES_TO_CODES = {
-    "eye": "PORADNIA OKULISTYCZNA",
-    "eyes": "PORADNIA OKULISTYCZNA",
-    "ophthalmology": "PORADNIA OKULISTYCZNA",
-    "ophthalmologist": "PORADNIA OKULISTYCZNA",
-    "oculist": "PORADNIA OKULISTYCZNA",
-    "ear": "PORADNIA OTOLARYNGOLOGICZNA",
-    "ears": "PORADNIA OTOLARYNGOLOGICZNA",
-    "nose": "PORADNIA OTOLARYNGOLOGICZNA",
-    "throat": "PORADNIA OTOLARYNGOLOGICZNA",
-    "laryngology": "PORADNIA OTOLARYNGOLOGICZNA",
-    "laryngologist": "PORADNIA OTOLARYNGOLOGICZNA",
-    "otolaryngology": "PORADNIA OTOLARYNGOLOGICZNA",
-    "otolaryngologist": "PORADNIA OTOLARYNGOLOGICZNA",
-    "ent": "PORADNIA OTOLARYNGOLOGICZNA",
-    "heart": "PORADNIA KARDIOLOGICZNA",
-    "cardiology": "PORADNIA KARDIOLOGICZNA",
-    "cardiologist": "PORADNIA KARDIOLOGICZNA",
-    "neurology": "PORADNIA NEUROLOGICZNA",
-    "neurologist": "PORADNIA NEUROLOGICZNA",
-    "orthopaedics": "PORADNIA ORTOPEDYCZNA",
-    "orthopedics": "PORADNIA ORTOPEDYCZNA",
-    "orthopedist": "PORADNIA ORTOPEDYCZNA",
-    "orthopaedist": "PORADNIA ORTOPEDYCZNA",
-    "gynecology": "PORADNIA GINEKOLOGICZNO-POŁOŻNICZA",
-    "gynecologist": "PORADNIA GINEKOLOGICZNO-POŁOŻNICZA",
-    "obstetrics": "PORADNIA GINEKOLOGICZNO-POŁOŻNICZA",
-    "urology": "PORADNIA UROLOGICZNA",
-    "urologist": "PORADNIA UROLOGICZNA",
-    "surgery": "PORADNIA CHIRURGII OGÓLNEJ",
-    "surgeon": "PORADNIA CHIRURGII OGÓLNEJ",
-    "dermatology": "PORADNIA DERMATOLOGICZNA",
-    "dermatologist": "PORADNIA DERMATOLOGICZNA",
-    "skin": "PORADNIA DERMATOLOGICZNA",
-    "endocrinology": "PORADNIA ENDOKRYNOLOGICZNA",
-    "endocrinologist": "PORADNIA ENDOKRYNOLOGICZNA",
-    "diabetes": "PORADNIA DIABETOLOGICZNA",
-    "diabetologist": "PORADNIA DIABETOLOGICZNA",
-    "gastroenterology": "PORADNIA GASTROENTEROLOGICZNA",
-    "gastroenterologist": "PORADNIA GASTROENTEROLOGICZNA",
-    "rheumatology": "PORADNIA REUMATOLOGICZNA",
-    "rheumatologist": "PORADNIA REUMATOLOGICZNA",
-    "pulmonology": "PORADNIA PULMONOLOGICZNA",
-    "pulmonologist": "PORADNIA PULMONOLOGICZNA",
-    "lungs": "PORADNIA PULMONOLOGICZNA",
-    "psychiatry": "PORADNIA ZDROWIA PSYCHICZNEGO",
-    "psychiatrist": "PORADNIA ZDROWIA PSYCHICZNEGO",
-    "psychology": "PORADNIA ZDROWIA PSYCHICZNEGO",
-    "psychologist": "PORADNIA ZDROWIA PSYCHICZNEGO",
-    "mental health": "PORADNIA ZDROWIA PSYCHICZNEGO",
-    "tomography": "TOMOGRAFIA KOMPUTEROWA",
-    "ct scan": "TOMOGRAFIA KOMPUTEROWA",
-    "ct": "TOMOGRAFIA KOMPUTEROWA",
-    "mri": "REZONANS MAGNETYCZNY",
-    "magnetic resonance": "REZONANS MAGNETYCZNY",
-    "gastroscopy": "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - GASTROSKOPIA",
-    "colonoscopy": "BADANIA ENDOSKOPOWE PRZEWODU POKARMOWEGO - KOLONOSKOPIA",
-    "dentist": "PORADNIA STOMATOLOGICZNA",
-    "dental": "PORADNIA STOMATOLOGICZNA",
 }
 
 # Treatment priority/case types
@@ -432,7 +341,7 @@ class NFZApiClient:
 
 
 # Helper function to find best available visits
-async def find_available_visits(province: str, medical_service: str, for_children: bool = False, limit: int = 5) -> List[Queue]:
+async def find_available_visits(province: str, benefit: benefit_names, for_children: bool = False, limit: int = 5) -> List[Queue]:
     """
     Find available visits based on province and medical service
     
@@ -445,7 +354,7 @@ async def find_available_visits(province: str, medical_service: str, for_childre
     Returns:
         List of available visits sorted by earliest date
     """
-    logger.info(f"Finding visits for province: '{province}', service: '{medical_service}', for_children: {for_children}")
+    logger.info(f"Finding visits for province: '{province}', service: '{benefit}', for_children: {for_children}")
     
     # Convert province name to code if needed
     province_code = province
@@ -471,27 +380,6 @@ async def find_available_visits(province: str, medical_service: str, for_childre
     logger.info(f"Using province code: {province_code}")
     
     # If medical service is in the common names mapping, use the mapped code
-    benefit_code_from_map = BENEFIT_NAMES_TO_CODES.get(medical_service.lower())
-    if benefit_code_from_map:
-        benefit = benefit_code_from_map
-        logger.info(f"Mapped service '{medical_service}' to '{benefit}'")
-    # If medical service is a common benefit key, use it directly
-    elif medical_service.upper() in COMMON_BENEFITS:
-        benefit = medical_service.upper()
-        logger.info(f"Using service as-is: '{benefit}'")
-    else:
-        # Try to find a matching common benefit
-        benefit = None
-        for key, value in COMMON_BENEFITS.items():
-            if medical_service.lower() in value.lower():
-                benefit = key
-                logger.info(f"Matched service '{medical_service}' to '{benefit}'")
-                break
-        
-        # If no match found, use the provided service name
-        if not benefit:
-            benefit = medical_service.upper()
-            logger.info(f"No match found for service '{medical_service}', using as-is: '{benefit}'")
     
     # Create API client
     client = NFZApiClient()

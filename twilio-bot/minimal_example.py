@@ -17,6 +17,7 @@ from agents import (
 )
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 from dotenv import load_dotenv
+from bot_types import benefit_names
 
 # Import the NFZ API functions
 from nfz_api import find_available_visits, format_visit_results
@@ -26,7 +27,7 @@ load_dotenv()
 @function_tool(
     name_override="visits", description_override="Lookup visits at the National Health Fund (NFZ)."
 )
-async def visits(location: str, medical_service: str, user_name: str) -> str:
+async def visits(location: str, medical_service: benefit_names, user_name: str) -> str:
     """
     Look up available medical visits in the National Health Fund (NFZ)
     
@@ -44,7 +45,7 @@ async def visits(location: str, medical_service: str, user_name: str) -> str:
         # Query the NFZ API for available visits
         queues = await find_available_visits(
             province=location,
-            medical_service=medical_service,
+            benefit=medical_service,
             for_children=False,
             limit=5
         )
