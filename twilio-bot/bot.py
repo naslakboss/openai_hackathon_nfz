@@ -20,10 +20,8 @@ from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
-from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
 from pipecat.processors.audio.audio_buffer_processor import AudioBufferProcessor
 from pipecat.serializers.twilio import TwilioFrameSerializer
-from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.network.fastapi_websocket import (
     FastAPIWebsocketParams,
     FastAPIWebsocketTransport,
@@ -32,9 +30,8 @@ from pipecat.processors.aggregators.llm_response import (
     LLMAssistantResponseAggregator,
     LLMUserResponseAggregator,
 )
-from pipecat.frames.frames import BotInterruptionFrame, EndFrame, LLMMessagesFrame
-from CustomBroAgent import CustomBroAgent
-from AgentProcessor import AgentProcessor
+from pipecat.frames.frames import LLMMessagesFrame
+from OpenAiAgentProcessor import OpenAiAgentProcessor
 
 load_dotenv(override=True)
 
@@ -77,8 +74,7 @@ async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
     stt = get_stt()
     tts = get_tts()
     
-    agent = CustomBroAgent(tools=[])
-    agent_processor = AgentProcessor(agent=agent, participant_id="a")
+    openai_agent_processor = OpenAiAgentProcessor(participant_id="a")
     user_agg = LLMUserResponseAggregator()
     assistant_agg = LLMAssistantResponseAggregator()
 
@@ -90,7 +86,7 @@ async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
             stt,  
             user_agg,
 
-            agent_processor,
+            openai_agent_processor,
 
             tts, 
             transport.output(),
