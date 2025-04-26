@@ -1,5 +1,5 @@
 agent_name = "my-first-agent"
-image = "bnowako999998/my-first-agent:0.1"
+image = "bnowako999998/my-first-agent:0.3"
 secret_set = "my-first-agent-secrets"
 
 [scaling]

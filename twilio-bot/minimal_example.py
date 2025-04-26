@@ -22,12 +22,12 @@ from bot_types import benefit_names, province_codes
 
 # Import the NFZ API functions
 from twilio_sms import TwilioSMS
-from nfz_api import find_available_visits, format_visit_results, find_province_for_locality
 
 # Configure logging to reduce verbosity
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger('agents').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)
+from nfz_api import find_available_visits, format_visit_results, verify_locality_province, find_province_for_locality
 
 load_dotenv()
 
