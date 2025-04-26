@@ -18,14 +18,44 @@ from agents import (
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 from dotenv import load_dotenv
 
+# Import the NFZ API functions
+from nfz_api import find_available_visits, format_visit_results
+
 load_dotenv()
 
 @function_tool(
-    name_override="visits", description_override="Lookup visits."
+    name_override="visits", description_override="Lookup visits at the National Health Fund (NFZ)."
 )
 async def visits(location: str, medical_service: str, user_name: str) -> str:
-    print(f"checking location {location} for {medical_service} for {user_name}")
-    return f"{medical_service} in {location} available tommorow"
+    """
+    Look up available medical visits in the National Health Fund (NFZ)
+    
+    Args:
+        location: Location or province name/code
+        medical_service: Type of medical service needed
+        user_name: Name of the user requesting the visit
+        
+    Returns:
+        Information about available visits
+    """
+    print(f"Checking NFZ API for {medical_service} in {location} for {user_name}")
+    
+    try:
+        # Query the NFZ API for available visits
+        queues = await find_available_visits(
+            province=location,
+            medical_service=medical_service,
+            for_children=False,
+            limit=5
+        )
+        
+        # Format the results
+        result = format_visit_results(queues)
+        return f"Hello {user_name}, here are the available visits:\n\n{result}"
+    
+    except Exception as e:
+        print(f"Error querying NFZ API: {e}")
+        return f"Sorry {user_name}, I couldn't find any available visits for {medical_service} in {location} due to an error."
 
 nfz_agent = Agent(
     name="NFZ Agent",
