@@ -9,12 +9,13 @@ import io
 import os
 import sys
 import wave
-
+from pipecat.services.groq import GroqSTTService
+from pipecat.transcriptions.language import Language
 import aiofiles
 from dotenv import load_dotenv
 from fastapi import WebSocket
 from loguru import logger
-
+from pipecat.services.elevenlabs import ElevenLabsTTSService
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
@@ -70,13 +71,8 @@ async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
 
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o")
 
-    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"), audio_passthrough=True)
-
-    tts = CartesiaTTSService(
-        api_key=os.getenv("CARTESIA_API_KEY"),
-        voice_id="71a7ad14-091c-4e8e-a314-022ece01c121",  # British Reading Lady
-        push_silence_after_stop=testing,
-    )
+    stt = get_stt()
+    tts = get_tts()
 
     messages = [
         {
@@ -138,3 +134,21 @@ async def run_bot(websocket_client: WebSocket, stream_sid: str, testing: bool):
     runner = PipelineRunner(handle_sigint=False, force_gc=True)
 
     await runner.run(task)
+
+def get_tts():
+    return ElevenLabsTTSService(
+        api_key=os.getenv("ELEVENLABS_API_KEY"),
+        voice_id="Xb7hH8MSUJpSbSDYk0k2",
+        sample_rate=24000,
+        params=ElevenLabsTTSService.InputParams(language=Language.EN),
+    )
+
+
+def get_stt():
+    return GroqSTTService(
+        model="whisper-large-v3-turbo",
+        api_key=os.getenv("GROQ_API_KEY"),
+        language=Language.EN,
+        prompt="Transcribe the following conversation",
+        temperature=0.0,
+    )
